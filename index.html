@@ -22,7 +22,12 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 /* device frame: 16:10 landscape, scales to viewport */
 .device{position:relative;width:min(100%,calc((100vh - 24px) * 1.6));aspect-ratio:16/10;max-height:calc(100vh - 24px);background:var(--paper);border-radius:28px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.35)}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;font-size:calc(var(--u) * 1px)}
-@media (max-height:520px){body{padding:0}.device{width:100%;height:100dvh;max-height:none;aspect-ratio:auto;border-radius:0;box-shadow:none}}
+@media (max-height:520px){body{padding:0}.device{width:100%;height:100dvh;max-height:none;aspect-ratio:auto;border-radius:0;box-shadow:none}
+.cap{font-size:calc(var(--u)*21px);max-width:calc(100% - var(--u)*200px)}.foot:has(.mic) .cap{max-width:calc(50% - var(--u)*60px)}
+.stageN .ttl{font-size:calc(var(--u)*21px)}.stageN .cnt{font-size:calc(var(--u)*14px)}.stageN .blk small{font-size:calc(var(--u)*16px)}.stageN .msg{font-size:calc(var(--u)*17px)}
+.check h3{font-size:calc(var(--u)*23px)}.check .abc{font-size:calc(var(--u)*24px)}.check .fb{font-size:calc(var(--u)*17px)}
+.tk-msg{font-size:calc(var(--u)*20px);max-width:88%}.tk-msg.hint{font-size:calc(var(--u)*15px)}.tk-heard{font-size:calc(var(--u)*16px)}.tk-msg.me .blk{height:calc(var(--u)*52px);font-size:calc(var(--u)*24px)}
+.band span{font-size:calc(var(--u)*16px)}.band span.now{font-size:calc(var(--u)*16.5px)}.hdr .crumb{font-size:calc(var(--u)*13px)}}
 /* --u = 1/928 of device width, set by JS */
 
 /* header */
@@ -51,7 +56,7 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .foot{flex:0 0 auto;height:calc(var(--u)*96px);position:relative;display:flex;align-items:center;padding:0 calc(var(--u)*30px);gap:calc(var(--u)*10px);background:var(--sun-tint)}
 .cubi{position:relative;display:inline-block;line-height:0;transform-origin:50% 100%;animation:breathe 3.2s ease-in-out infinite}
 .cubi img{height:100%;width:auto;display:block}
-.cubi .patch{position:absolute;width:12.5%;aspect-ratio:2.4;border-radius:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;filter:blur(.6px)}
+.cubi .patch{position:absolute;width:14.5%;aspect-ratio:2.2;border-radius:45%;transform:translate(-50%,-56%);opacity:0;pointer-events:none;filter:blur(.6px)}
 .cubi.talking .patch{opacity:1}
 .cubi .mouth{position:absolute;width:10%;aspect-ratio:1.7;background:#1B1540;border-radius:40% 40% 50% 50%/35% 35% 65% 65%;transform:translate(-50%,-35%) scaleY(0);transform-origin:50% 20%;opacity:0;pointer-events:none}
 .cubi .mouth::after{content:"";position:absolute;left:22%;right:22%;bottom:8%;height:40%;background:#F48A96;border-radius:50% 50% 40% 40%}
