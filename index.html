@@ -294,6 +294,33 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .wr-side .btn{border:1.5px solid var(--teal);background:#fff;color:var(--teal-d);border-radius:999px;padding:calc(var(--u)*9px) calc(var(--u)*18px);font-size:calc(var(--u)*13px);font-weight:700;cursor:pointer}
 .wr-side .btn.pri{background:var(--teal);color:#fff}
 
+
+/* ---- Block Rain ---- */
+.rain{flex:1;min-height:0;position:relative;background:radial-gradient(ellipse at 50% 100%,#2D2466 0%,#1B1540 70%);border-radius:calc(var(--u)*18px);overflow:hidden;touch-action:manipulation}
+.rain .top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(var(--u)*10px) calc(var(--u)*18px);z-index:3;background:linear-gradient(#1B1540 70%,transparent);padding-bottom:calc(var(--u)*18px);color:#8FD8D8;font-size:calc(var(--u)*13px);font-weight:700}
+.rain .top .ko{font-size:calc(var(--u)*20px);color:#fff;font-weight:900}
+.rain .top .hearts{letter-spacing:2px;color:#F48A96;font-size:calc(var(--u)*16px)}
+.rain .top .sc{font-family:var(--f-en);font-size:calc(var(--u)*18px);color:#FFE38A}
+.rain .fb{position:absolute;top:calc(var(--u)*48px);left:0;right:0;text-align:center;color:#FFE38A;font-weight:900;font-size:calc(var(--u)*16px);opacity:0;transition:opacity .2s;z-index:3}
+.rain .fb.show{opacity:1}
+.rain .drop{position:absolute;top:0;left:0;will-change:transform;cursor:pointer;z-index:2}
+.rain .drop .blk{height:calc(var(--u)*54px);font-size:calc(var(--u)*23px);padding:0 calc(var(--u)*18px);min-width:calc(var(--u)*70px);box-shadow:0 calc(var(--u)*6px) 0 rgba(0,0,0,.3)}
+.rain .drop.hit .blk{animation:pop .3s}
+.rain .drop.miss .blk{animation:shake .4s;filter:brightness(.7)}
+.rain .slots{position:absolute;left:0;right:0;bottom:calc(var(--u)*16px);display:flex;justify-content:center;gap:calc(var(--u)*8px);z-index:3}
+.rain .slots .blk{height:calc(var(--u)*56px);font-size:calc(var(--u)*24px);padding:0 calc(var(--u)*20px);min-width:calc(var(--u)*80px)}
+.rain .slots .hole{height:calc(var(--u)*56px);min-width:calc(var(--u)*90px);border-radius:calc(var(--u)*12px);border:3px dashed #5B4FA8;display:grid;place-items:center;color:#5B4FA8;font-family:var(--f-en);font-weight:700;font-size:calc(var(--u)*22px)}
+.rain .floor{position:absolute;left:0;right:0;bottom:0;height:calc(var(--u)*90px);background:linear-gradient(transparent,#1B1540 60%);z-index:1}
+.rain .over{position:absolute;inset:0;z-index:5;background:rgba(27,21,64,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*12px);color:#fff;text-align:center}
+.rain .over h2{margin:0;font-size:calc(var(--u)*28px);font-weight:900}
+.rain .over .big{font-family:var(--f-en);font-size:calc(var(--u)*56px);font-weight:700;color:#FFE38A;line-height:1}
+.rain .over .sm{color:#BFD8D8;font-size:calc(var(--u)*14px)}
+.rain .over .btn{border:0;background:var(--sun);color:var(--ink);border-radius:999px;padding:calc(var(--u)*12px) calc(var(--u)*28px);font-size:calc(var(--u)*16px);font-weight:900;cursor:pointer;margin-top:calc(var(--u)*8px)}
+.rain .over .btn.sec{background:transparent;border:1.5px solid #8FD8D8;color:#8FD8D8}
+.rain .lvl{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:var(--f-en);font-weight:700;font-size:calc(var(--u)*40px);color:#FFE38A;opacity:0;z-index:4;pointer-events:none}
+.rain .lvl.show{animation:lvl 1.2s ease-out}
+@keyframes lvl{0%{opacity:0;transform:translate(-50%,-30%) scale(.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%)}}
+
 /* placeholder stage */
 .ph{flex:1;display:grid;place-items:center;color:var(--ink-soft);font-size:calc(var(--u)*15.3px);text-align:center;line-height:1.6}
 
@@ -1166,15 +1193,15 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('button,.lv,.un,
 let audioUnlocked=false;
 function unlockAudio(){if(audioUnlocked)return;audioUnlocked=true;try{const c=ac();if(c){const b=c.createBuffer(1,1,22050);const src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);}}catch(e){}BGM.apply();}
 ['touchend','pointerup','click','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
-const BGM={cur:null,el:{},vol:0.1,want:null,
+const BGM={cur:null,el:{},vol:0.1,vols:{calm:0.04,chip:0.07,rain:0.09},want:null,
   src:{calm:'bgm/calm.mp3',chip:'bgm/8bit.mp3',rain:'bgm/rain.mp3'},
   get(name){if(!this.el[name]){const a=new Audio(this.src[name]);a.loop=true;a.preload='auto';a.volume=0;this.el[name]=a;}return this.el[name];},
   set(name){this.want=name;this.apply();},
   apply(){const name=(S.music&&audioUnlocked)?this.want:null;if(this.cur&&this.cur!==name){const a=this.el[this.cur];this.fade(a,0,()=>a.pause());this.cur=null;}
-    if(name&&this.cur!==name){const a=this.get(name);a.volume=0;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});this.fade(a,this.vol);this.cur=name;}},
+    if(name&&this.cur!==name){const a=this.get(name);a.volume=0;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});this.fade(a,this.vols[name]||this.vol);this.cur=name;}},
   fade(a,to,done){if(!a)return;clearInterval(a._f);const step=(to-a.volume)/8;let n=0;a._f=setInterval(()=>{n++;a.volume=Math.max(0,Math.min(1,a.volume+step));if(n>=8){a.volume=to;clearInterval(a._f);done&&done();}},60);},
   toggle(){S.music=!S.music;try{localStorage.setItem('bb.music',S.music?'on':'off');}catch(e){}this.apply();}};
-const BGM_FOR=()=>{if(S.route==='town'||S.route==='level')return 'calm';if(S.route==='unit'){return [ 'calm','chip','calm',null,null,null][S.stage]||null;}if(S.route==='game')return 'rain';return null;};
+const BGM_FOR=()=>{if(S.route==='unit'){return [ 'calm','chip','calm',null,null,null][S.stage]||null;}if(S.route==='game')return 'rain';return null;};
 /* ================= helpers ================= */
 const el=(tag,cls,html)=>{const d=document.createElement(tag);if(cls)d.className=cls;if(html!==undefined)d.innerHTML=html;return d;};
 const md=t=>t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
@@ -1219,7 +1246,7 @@ function renderTown(){app.innerHTML='';app.appendChild(header('',{nocc:true}));
   [['Block Rain','떨어지는 블록','#1B1540','rain','1,240'],['Cubi Quiz','문법 용어 퀴즈','#2F6B5E','quiz','860'],['Tower Rush','탑 쌓기','#6B3F8F','tower','12층']].forEach(x=>{const t=el('button','gt');t.style.background=x[2];
     const ic=x[3]==='quiz'?'?':x[3]==='rain'?`<div class="mini"><i style="width:30px;background:var(--subj)"></i><i style="width:38px;background:var(--verb)"></i><i style="width:26px;background:var(--obj)"></i></div>`:`<div class="mini"><i style="width:22px;background:var(--comp)"></i><i style="width:30px;background:var(--obj)"></i><i style="width:38px;background:var(--verb)"></i><i style="width:34px;background:var(--subj)"></i></div>`;
     t.innerHTML=`<div class="ic">${ic}</div><div><div class="t">${x[0]}</div><div class="d">${x[1]}</div><div class="play"><b>▶ Play</b><span>🏆 ${x[4]}</span></div></div>`;
-    t.onclick=()=>toast(x[0]+'은 5회차에서 열려요');gt.appendChild(t);});
+    t.onclick=()=>{if(x[3]==='rain'){S.route='game';render();}else toast(x[0]+'은 다음 빌드에서 열려요');};gt.appendChild(t);});
   g.appendChild(gt);b.appendChild(g);app.appendChild(b);}
 
 function renderLevel(){app.innerHTML='';app.appendChild(header('<a data-go="town">Block Town</a> › Level 1',{nocc:true,back:()=>{S.route='town';render();}}));
@@ -1478,8 +1505,50 @@ function renderWrap(){const U=UNITS[S.unit];const items=U.speak_stack.items;cons
   if(complete)SFX.ok();speak(say,()=>{if(complete)cubiMotion('jump');});
 }
 
+
+/* ================= Block Rain ================= */
+let rainLoop=null;
+function rainSentences(){const out=[];Object.values(UNITS).forEach(U=>{(U.warmup.sentences||[]).forEach(x=>out.push({ko:x.ko,blocks:x.blocks}));(U.speak_stack.items||[]).forEach(x=>out.push({ko:x.ko,blocks:x.blocks}));});
+  const seen=new Set();return out.filter(x=>{const k=x.blocks.map(b=>b[0]).join(' ');if(seen.has(k))return false;seen.add(k);return true;});}
+function renderGame(){app.innerHTML='';app.appendChild(header('<a data-go="town">Block Town</a> › Block Rain',{nocc:true,back:()=>{S.route='town';render();}}));
+  const b=el('div','body');b.style.padding='calc(var(--u)*10px) calc(var(--u)*16px) calc(var(--u)*12px)';const st=el('div','rain');b.appendChild(st);app.appendChild(b);
+  const pool=rainSentences();const vocab={subj:new Set(),verb:new Set()};pool.forEach(x=>x.blocks.forEach(bl=>vocab[bl[1]]&&vocab[bl[1]].add(bl[0])));
+  let best=0;try{best=+localStorage.getItem('bb.rain.best')||0;}catch(e){}
+  const G={score:0,lives:3,round:0,level:1,need:[],fill:0,drops:[],running:false,speed:1,last:0,spawnT:0,order:[]};
+  st.innerHTML=`<div class="top"><div><div class="ko" id="rKo"></div></div><div class="hearts" id="rHearts"></div><div class="sc" id="rSc">0</div></div><div class="fb" id="rFb"></div><div class="lvl" id="rLvl"></div><div class="floor"></div><div class="slots" id="rSlots"></div>`;
+  const W=()=>st.clientWidth,H=()=>st.clientHeight;
+  const hearts=()=>{$('#rHearts').textContent='♥'.repeat(G.lives)+'♡'.repeat(3-G.lives);};
+  const fb=(t)=>{const f=$('#rFb');f.textContent=t;f.classList.add('show');clearTimeout(f._t);f._t=setTimeout(()=>f.classList.remove('show'),900);};
+  const slotsDraw=()=>{const sl=$('#rSlots');sl.innerHTML='';G.need.forEach((bl,k)=>{if(k<G.fill)sl.appendChild(blk(bl[0],bl[1]));else sl.appendChild(el('div','hole',k===G.fill?'?':''));});};
+  function newRound(){G.round++;if(G.round%4===1&&G.round>1){G.level++;G.speed+=0.35;const l=$('#rLvl');l.textContent='LEVEL '+G.level;l.classList.remove('show');void l.offsetWidth;l.classList.add('show');SFX.ok();}
+    const sent=G.order.length?G.order.shift():null;if(!sent){G.order=pool.slice().sort(()=>Math.random()-.5);return newRound();}
+    G.need=sent.blocks;G.fill=0;$('#rKo').textContent=sent.ko;slotsDraw();G.drops.forEach(d=>d.el.remove());G.drops=[];G.spawnT=0;}
+  function spawn(now){const k=G.fill;if(k>=G.need.length)return;const want=G.need[k];
+    // decide: correct block (60%) or distractor of same role
+    const live=G.drops.filter(d=>!d.dead);const hasCorrect=live.some(d=>d.text===want[0]);
+    let text=want[0],role=want[1];if(hasCorrect||Math.random()<0.4){const arr=[...vocab[role]].filter(w=>w!==want[0]);if(arr.length){text=arr[Math.floor(Math.random()*arr.length)];}}
+    const d=el('div','drop');d.appendChild(blk(text,role));st.appendChild(d);const w=d.offsetWidth;const x=Math.random()*(W()-w-20)+10;const obj={el:d,text,role,x,y:-70,vy:(55+Math.random()*25)*G.speed,dead:false};
+    d.style.transform=`translate(${x}px,-70px)`;
+    d.onpointerdown=e=>{e.preventDefault();if(obj.dead||!G.running)return;if(obj.text===G.need[G.fill][0]){obj.dead=true;d.classList.add('hit');SFX.click();G.fill++;G.score+=10*G.level;$('#rSc').textContent=G.score;slotsDraw();setTimeout(()=>d.remove(),250);
+        if(G.fill>=G.need.length){G.running=false;SFX.ok();fb('✓ '+G.need.map(b=>b[0]).join(' '));G.score+=20*G.level;$('#rSc').textContent=G.score;speak('**'+G.need.map(b=>b[0]).join(' ')+'**',()=>{});setTimeout(()=>{G.running=true;newRound();},1100);}}
+      else{d.classList.add('miss');SFX.bad();G.lives--;hearts();fb(S.lang==='ko'?'앗, 다른 블록이야':'Oops, wrong block');setTimeout(()=>d.classList.remove('miss'),400);if(G.lives<=0)gameOver();}};
+    G.drops.push(obj);}
+  function tick(now){if(!G.running){G.last=now;rainLoop=requestAnimationFrame(tick);return;}const dt=Math.min(0.05,(now-G.last)/1000||0);G.last=now;
+    G.spawnT-=dt;if(G.spawnT<=0){spawn(now);G.spawnT=Math.max(0.55,1.5/G.speed);}
+    const floorY=H()-90;G.drops.forEach(o=>{if(o.dead)return;o.y+=o.vy*dt;o.el.style.transform=`translate(${o.x}px,${o.y}px)`;if(o.y>floorY){o.dead=true;o.el.style.transition='opacity .25s';o.el.style.opacity='0';setTimeout(()=>o.el.remove(),260);}});
+    G.drops=G.drops.filter(o=>!o.dead||o.el.isConnected);rainLoop=requestAnimationFrame(tick);}
+  function gameOver(){G.running=false;const nb=Math.max(best,G.score);try{localStorage.setItem('bb.rain.best',nb);}catch(e){}
+    const o=el('div','over');o.innerHTML=`<h2>${S.lang==='ko'?'블록 비가 그쳤어!':'The rain stopped!'}</h2><div class="big">${G.score}</div><div class="sm">${S.lang==='ko'?'최고 기록':'Best'} ${nb} · ${S.lang==='ko'?'레벨':'Level'} ${G.level} · ${G.round-1}${S.lang==='ko'?'문장':' sentences'}</div>`;
+    const re=el('button','btn',S.lang==='ko'?'다시 하기':'Play again');re.onclick=()=>{render();};const tw=el('button','btn sec','Block Town');tw.onclick=()=>{S.route='town';render();};o.appendChild(re);o.appendChild(tw);st.appendChild(o);}
+  // start overlay
+  const so=el('div','over');so.innerHTML=`<h2>Block Rain</h2><div class="sm">${S.lang==='ko'?'위의 한국어 문장에 맞는 블록을 순서대로 눌러 잡아!<br>틀리면 ♥ 하나, 세 번 틀리면 끝.':'Tap the falling blocks in order to build the sentence!<br>Wrong block = lose a ♥.'}</div><div class="sm">${S.lang==='ko'?'최고 기록':'Best'} ${best}</div>`;
+  const go=el('button','btn',S.lang==='ko'?'시작!':'Start!');go.onclick=()=>{so.remove();hearts();G.running=true;G.last=performance.now();newRound();};so.appendChild(go);st.appendChild(so);
+  hearts();rainLoop=requestAnimationFrame(tick);
+}
+
 /* ================= router ================= */
-function render(){stopSpeech();if(typeof ctClear==='function')ctClear();BGM.set(BGM_FOR());
+function render(){stopSpeech();if(typeof ctClear==='function')ctClear();if(rainLoop){cancelAnimationFrame(rainLoop);rainLoop=null;}BGM.set(BGM_FOR());
+  if(S.route==='game')return renderGame();
   if(S.route==='town')return renderTown();
   if(S.route==='level')return renderLevel();
   if(S.route==='unit'){if(S.stage===0)return renderWarm();if(S.stage===1)return renderCubiTime();if(S.stage===2)return renderBuild();if(S.stage===3)return renderSpeak();if(S.stage===4)return renderTalk();if(S.stage===5)return renderWrap();return renderStub(S.stage);}
