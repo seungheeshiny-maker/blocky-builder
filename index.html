@@ -26,7 +26,7 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .cap{font-size:calc(var(--u)*21px);max-width:calc(100% - var(--u)*200px)}.foot:has(.mic) .cap{max-width:calc(50% - var(--u)*60px)}
 .stageN .ttl{font-size:calc(var(--u)*21px)}.stageN .cnt{font-size:calc(var(--u)*14px)}.stageN .blk small{font-size:calc(var(--u)*16px)}.stageN .msg{font-size:calc(var(--u)*17px)}
 .check h3{font-size:calc(var(--u)*23px)}.check .abc{font-size:calc(var(--u)*24px)}.check .fb{font-size:calc(var(--u)*17px)}
-.tk-msg{font-size:calc(var(--u)*20px);max-width:88%}.tk-msg.hint{font-size:calc(var(--u)*15px)}.tk-heard{font-size:calc(var(--u)*16px)}.tk-msg.me .blk{height:calc(var(--u)*52px);font-size:calc(var(--u)*24px)}
+.tk-msg{font-size:calc(var(--u)*20px);max-width:88%}.tk-msg.hint{font-size:calc(var(--u)*24px)}.tk-heard{font-size:calc(var(--u)*16px)}.tk-msg.me .blk{height:calc(var(--u)*52px);font-size:calc(var(--u)*24px)}
 .band span{font-size:calc(var(--u)*16px)}.band span.now{font-size:calc(var(--u)*16.5px)}.hdr .crumb{font-size:calc(var(--u)*13px)}}
 /* --u = 1/928 of device width, set by JS */
 
@@ -270,7 +270,8 @@ button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .tk-msg.me .blk{height:calc(var(--u)*44px);font-size:calc(var(--u)*20px);padding:0 calc(var(--u)*16px);min-width:calc(var(--u)*56px);box-shadow:0 4px 0 rgba(0,0,0,.18)}
 .tk-msg.me .blk.hole{background:#fff;border:2px dashed var(--verb);color:var(--verb);box-shadow:none}
 .tk-msg.me.bad .blk.hole{border-color:#E05A5A;color:#E05A5A}
-.tk-msg.hint{align-self:flex-end;background:transparent;border:0;color:var(--ink-soft);font-size:calc(var(--u)*12px);padding:0 calc(var(--u)*6px);animation:none}
+.tk-msg.hint{align-self:flex-end;background:transparent;border:0;color:var(--ink);font-weight:700;font-size:calc(var(--u)*19px);padding:0 calc(var(--u)*6px);animation:none}
+.tk-msg.hint b{font-family:var(--f-en);color:var(--teal-d)}
 .tk-heard{align-self:flex-end;font-family:var(--f-en);font-size:calc(var(--u)*13px);color:var(--ink-soft);padding:0 calc(var(--u)*6px)}
 /* ---- Wrap Up ---- */
 .wu-wrap{flex:1;min-height:0;display:grid;grid-template-columns:1fr calc(var(--u)*300px);gap:calc(var(--u)*14px)}
@@ -1418,7 +1419,7 @@ function renderTalk(){const U=UNITS[S.unit];const TK=U.talk_to_cubi;const turns=
   // user's pending bubble: [subj][___]
   let me=null;const showMe=(verb,bad)=>{if(!me){me=el('div','tk-msg me');chat.appendChild(me);}me.className='tk-msg me'+(bad?' bad':'');me.innerHTML='';me.appendChild(blk(subj,'subj'));const v=verb?blk(verb,'verb'):blk('___','verb hole');me.appendChild(v);scroll();};
   const heard=el('div','tk-heard');
-  const showMic=()=>{phase='ready';$('#mic').classList.remove('hide');SFX.micOn();showMe(null,false);const h=el('div','tk-msg hint',T(tn.hint));chat.appendChild(h);scroll();};
+  const showMic=()=>{phase='ready';$('#mic').classList.remove('hide');SFX.micOn();showMe(null,false);const h=el('div','tk-msg hint',md(T(tn.hint).replace(/["“”]/g,'').replace(/([A-Za-z]+ ___\.?)/,'**$1**')));chat.appendChild(h);scroll();};
   function startRec(){if(!SR){heard.textContent=S.lang==='ko'?'이 브라우저는 음성 인식을 지원하지 않아요':'Speech recognition not supported';chat.appendChild(heard);$('.next').classList.add('on');return;}
     phase='rec';const m=$('#mic');m.classList.add('rec');SFX.recStart();heard.textContent=S.lang==='ko'?'듣고 있어요…':'Listening…';chat.appendChild(heard);scroll();
     rec=new SR();rec.lang='en-US';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=3;let finalText='',interim='',errored=false;
