@@ -1129,7 +1129,8 @@ const L1_UNITS=[['Unit 1','주인공 + 동작','L1-B1-U1'],['Unit 2','주인공 
 const STAGES=['Warm-Up','Cubi Time','Block Build','Speak & Stack','Talk to Cubi','Wrap Up'];
 
 /* ================= state ================= */
-const S={lang:'ko',cc:true,route:'town',unit:null,stage:0,idx:0};
+const S={lang:'ko',cc:true,route:'town',unit:null,stage:0,idx:0,music:true};
+try{S.music=localStorage.getItem('bb.music')!=='off';}catch(e){}
 try{const p=JSON.parse(localStorage.getItem('bb.progress')||'{}');S.progress=p;}catch(e){S.progress={};}
 S.progress=S.progress||{};
 const save=()=>{try{localStorage.setItem('bb.progress',JSON.stringify(S.progress));}catch(e){}};
@@ -1161,6 +1162,19 @@ function tone(f,dur,type='sine',gain=.18,when=0){const c=ac();if(!c)return;const
 const SFX={micOn:()=>{tone(660,.12);tone(880,.18,'sine',.18,.1);},recStart:()=>{tone(520,.1,'triangle');},recStop:()=>{tone(880,.08,'triangle');tone(660,.14,'triangle',.18,.08);},ok:()=>{tone(523,.1);tone(659,.1,'sine',.18,.1);tone(784,.22,'sine',.2,.2);},bad:()=>{tone(300,.18,'sawtooth',.12);tone(240,.25,'sawtooth',.12,.15);},tap:()=>{tone(1000,.05,'square',.06);},click:()=>{tone(2200,.025,'square',.14);tone(900,.06,'triangle',.16,.03);tone(1400,.05,'sine',.1,.1);}};
 
 document.addEventListener('pointerdown',e=>{if(e.target.closest('button,.lv,.un,.gt,.opt,.tog'))SFX.tap();},true);
+/* iOS: unlock audio on first touch (AudioContext + silent HTML audio), then start BGM */
+let audioUnlocked=false;
+function unlockAudio(){if(audioUnlocked)return;audioUnlocked=true;try{const c=ac();if(c){const b=c.createBuffer(1,1,22050);const src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);}}catch(e){}BGM.apply();}
+['touchend','pointerup','click','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
+const BGM={cur:null,el:{},vol:0.1,want:null,
+  src:{calm:'bgm/calm.mp3',chip:'bgm/8bit.mp3',rain:'bgm/rain.mp3'},
+  get(name){if(!this.el[name]){const a=new Audio(this.src[name]);a.loop=true;a.preload='auto';a.volume=0;this.el[name]=a;}return this.el[name];},
+  set(name){this.want=name;this.apply();},
+  apply(){const name=(S.music&&audioUnlocked)?this.want:null;if(this.cur&&this.cur!==name){const a=this.el[this.cur];this.fade(a,0,()=>a.pause());this.cur=null;}
+    if(name&&this.cur!==name){const a=this.get(name);a.volume=0;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});this.fade(a,this.vol);this.cur=name;}},
+  fade(a,to,done){if(!a)return;clearInterval(a._f);const step=(to-a.volume)/8;let n=0;a._f=setInterval(()=>{n++;a.volume=Math.max(0,Math.min(1,a.volume+step));if(n>=8){a.volume=to;clearInterval(a._f);done&&done();}},60);},
+  toggle(){S.music=!S.music;try{localStorage.setItem('bb.music',S.music?'on':'off');}catch(e){}this.apply();}};
+const BGM_FOR=()=>{if(S.route==='town'||S.route==='level')return 'calm';if(S.route==='unit'){return [ 'calm','chip','calm',null,null,null][S.stage]||null;}if(S.route==='game')return 'rain';return null;};
 /* ================= helpers ================= */
 const el=(tag,cls,html)=>{const d=document.createElement(tag);if(cls)d.className=cls;if(html!==undefined)d.innerHTML=html;return d;};
 const md=t=>t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
@@ -1176,6 +1190,7 @@ function header(crumb,opts={}){const h=el('div','hdr');
   if(opts.back){h.querySelector('.back').onclick=()=>{stopSpeech();opts.back();};}
   h.querySelectorAll('.crumb a').forEach(a=>a.onclick=()=>{stopSpeech();const r=a.dataset.go;if(r==='town'){S.route='town';}else if(r==='level'){S.route='level';}render();});
   if(!opts.nocc){const cc=el('div','tog cc');cc.innerHTML=`<button id="ccBtn" aria-pressed="${S.cc}">${S.cc?'자막 ON':'자막 OFF'}</button>`;cc.querySelector('button').onclick=()=>{S.cc=!S.cc;render();};h.appendChild(cc);}
+  const mu=el('div','tog music');mu.innerHTML=`<button aria-pressed="${S.music}" aria-label="배경음악">${S.music?'♪ ON':'♪ OFF'}</button>`;mu.querySelector('button').onclick=()=>{BGM.toggle();mu.querySelector('button').textContent=S.music?'♪ ON':'♪ OFF';mu.querySelector('button').setAttribute('aria-pressed',S.music);};h.appendChild(mu);
   const lg=el('div','tog');lg.innerHTML=`<button aria-pressed="${S.lang==='ko'}">한</button><button aria-pressed="${S.lang==='en'}">EN</button>`;
   const [ko,en]=lg.querySelectorAll('button');ko.onclick=()=>{S.lang='ko';render();};en.onclick=()=>{S.lang='en';render();};h.appendChild(lg);
   return h;}
@@ -1233,7 +1248,7 @@ function renderWarm(){const U=UNITS[S.unit];const w=U.warmup;const i=S.idx;const
     onNext:()=>{stopSpeech();if(phase==='listen'){phase='ready';showMic();}else advanceWarm();}});
   f.classList.add('nocubi');app.appendChild(f);
   let autoT=null;
-  function showMic(){phase='ready';$('#mic').classList.remove('hide');SFX.micOn();}
+  function showMic(){phase='ready';$('#mic').classList.remove('hide');SFX.micOn();setTimeout(()=>{if(phase==='ready'){phase='rec';$('#mic').classList.add('rec');}},350);}
   // sequence: cubi line → sentence twice with a 1.5s pause → mic
   speak(cubiLine,()=>{setCap('**'+sent.en+'**');speak('**'+sent.en+'**[pause:800]**'+sent.en+'**',()=>{showMic();});});
   function advanceWarm(){clearTimeout(autoT);stopSpeech();if(S.idx<w.sentences.length-1){S.idx++;render();}else{S.stage=1;S.idx=0;render();}}
@@ -1366,7 +1381,7 @@ function renderSpeak(){const U=UNITS[S.unit];const SS=U.speak_stack;const items=
   let phase='listen',tries=0,rec=null,autoT=null,timer=null;
   const f=foot({cap:T(SS.intro),mic:true,micOn:false,nextOn:false,onMic:()=>{if(phase==='ready')startRec();else if(phase==='rec')stopRec();},onNext:()=>{clearTimeout(autoT);stopSpeech();if(rec)try{rec.abort();}catch(e){}nextSpeak();}});
   f.classList.add('nocubi');app.appendChild(f);
-  const showMic=()=>{phase='ready';$('#mic').classList.remove('hide');SFX.micOn();};
+  const showMic=()=>{phase='ready';$('#mic').classList.remove('hide');SFX.micOn();setTimeout(()=>{if(phase==='ready')startRec();},350);};
   function startRec(){if(!SR){heard.innerHTML='<span class="ss-nostt">'+(S.lang==='ko'?'이 브라우저는 음성 인식을 지원하지 않아요 (크롬/삼성인터넷에서 열어 주세요)':'Speech recognition not supported here (use Chrome)')+'</span>';$('.next').classList.add('on');return;}
     phase='rec';const m=$('#mic');m.classList.add('rec');SFX.recStart();heard.innerHTML='<span class="lbl">'+(S.lang==='ko'?'듣고 있어요…':'Listening…')+'</span>';
     rec=new SR();rec.lang='en-US';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=3;let finalText='',interim='',errored=false;
@@ -1390,7 +1405,7 @@ function renderSpeak(){const U=UNITS[S.unit];const SS=U.speak_stack;const items=
     else{SFX.bad();const e=el('div','eop',`<img src="${A.eop_x}">`);c.appendChild(e);setTimeout(()=>e.remove(),900);
       const first=res.find(r=>r.t!=='ok');let msg=T(SS.feedback[first.t]);msg=msg.replace('{w}',first.w||'').replace('{got}',first.got||'').replace('{want}',first.want||'');setCap(msg);
       if(tries>=2){phase='done';$('#mic').classList.add('hide');speak(msg+' **'+it.en+'**',()=>{autoT=setTimeout(nextSpeak,800);});$('.next').classList.add('on');}
-      else{phase='ready';speak(msg+' '+(S.lang==='ko'?'다시 말해 봐.':'Try again.'),()=>{});}}}
+      else{phase='ready';speak(msg+' '+(S.lang==='ko'?'다시 말해 봐.':'Try again.'),()=>{SFX.micOn();setTimeout(()=>{if(phase==='ready')startRec();},300);});}}}
   // sequence: intro (first item only) → read sentence → mic
   const go=()=>speak('**'+it.en+'**',()=>{row.querySelectorAll('.blk').forEach(d=>d.classList.remove('ghost'));showMic();});
   if(i===0){S.ss={ok:0,floors:[]};speak(T(SS.intro),go);}else go();
@@ -1419,7 +1434,7 @@ function renderTalk(){const U=UNITS[S.unit];const TK=U.talk_to_cubi;const turns=
   // user's pending bubble: [subj][___]
   let me=null;const showMe=(verb,bad)=>{if(!me){me=el('div','tk-msg me');chat.appendChild(me);}me.className='tk-msg me'+(bad?' bad':'');me.innerHTML='';me.appendChild(blk(subj,'subj'));const v=verb?blk(verb,'verb'):blk('___','verb hole');me.appendChild(v);scroll();};
   const heard=el('div','tk-heard');
-  const showMic=()=>{phase='ready';$('#mic').classList.remove('hide');SFX.micOn();showMe(null,false);const h=el('div','tk-msg hint',md(T(tn.hint).replace(/["“”]/g,'').replace(/([A-Za-z]+ ___\.?)/,'**$1**')));chat.appendChild(h);scroll();};
+  const showMic=()=>{phase='ready';$('#mic').classList.remove('hide');SFX.micOn();setTimeout(()=>{if(phase==='ready')startRec();},350);showMe(null,false);const h=el('div','tk-msg hint',md(T(tn.hint).replace(/["“”]/g,'').replace(/([A-Za-z]+ ___\.?)/,'**$1**')));chat.appendChild(h);scroll();};
   function startRec(){if(!SR){heard.textContent=S.lang==='ko'?'이 브라우저는 음성 인식을 지원하지 않아요':'Speech recognition not supported';chat.appendChild(heard);$('.next').classList.add('on');return;}
     phase='rec';const m=$('#mic');m.classList.add('rec');SFX.recStart();heard.textContent=S.lang==='ko'?'듣고 있어요…':'Listening…';chat.appendChild(heard);scroll();
     rec=new SR();rec.lang='en-US';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=3;let finalText='',interim='',errored=false;
@@ -1439,7 +1454,7 @@ function renderTalk(){const U=UNITS[S.unit];const TK=U.talk_to_cubi;const turns=
     else{SFX.bad();showMe(null,true);const msg=(words[0]!==norm(subj))?T(TK.wrong_subject).replace('{subj}',subj):T(TK.wrong_shape);setCap(msg);
       if(tries>=2){phase='done';$('#mic').classList.add('hide');const ex=subj+' '+(subj==='I'?'sing':'run');const d=el('div','tk-msg cubi',md(msg+' '+(S.lang==='ko'?'예를 들면 **'+ex+'.**':'For example, **'+ex+'.**')));chat.appendChild(d);scroll();S.tk.log.push({who:'me',blocks:[[subj,'subj'],['___','verb hole']]});
         speak(msg+' **'+ex+'.**',()=>{autoT=setTimeout(()=>{S.idx++;render();},600);});$('.next').classList.add('on');}
-      else{phase='ready';const d=el('div','tk-msg cubi',md(msg));chat.appendChild(d);scroll();speak(msg,()=>{});}}}
+      else{phase='ready';const d=el('div','tk-msg cubi',md(msg));chat.appendChild(d);scroll();speak(msg,()=>{SFX.micOn();setTimeout(()=>{if(phase==='ready')startRec();},300);});}}}
   if(i===0){S.tk={log:[],ok:0};cubiSay(T(TK.intro),()=>{S.tk.log.push({who:'cubi',t:T(TK.intro)});S.tk.log.push({who:'cubi',t:line});cubiSay(line,showMic);});}
   else{S.tk.log.push({who:'cubi',t:line});cubiSay(line,showMic);}
 }
@@ -1464,7 +1479,7 @@ function renderWrap(){const U=UNITS[S.unit];const items=U.speak_stack.items;cons
 }
 
 /* ================= router ================= */
-function render(){stopSpeech();if(typeof ctClear==='function')ctClear();
+function render(){stopSpeech();if(typeof ctClear==='function')ctClear();BGM.set(BGM_FOR());
   if(S.route==='town')return renderTown();
   if(S.route==='level')return renderLevel();
   if(S.route==='unit'){if(S.stage===0)return renderWarm();if(S.stage===1)return renderCubiTime();if(S.stage===2)return renderBuild();if(S.stage===3)return renderSpeak();if(S.stage===4)return renderTalk();if(S.stage===5)return renderWrap();return renderStub(S.stage);}
